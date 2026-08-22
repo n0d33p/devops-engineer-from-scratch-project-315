@@ -2,6 +2,50 @@
 
 Bulletin board service.
 
+## About this fork
+
+This is a fork of the [Hexlet `project-devops-deploy` template](https://github.com/Hexlet-components/project-devops-deploy), created as part of the "Bulletin board (IaC)" assignment.
+
+**What was added in this fork:**
+- A multi-stage `Dockerfile` that builds the React Admin frontend, embeds it into Spring Boot's static resources, builds and tests the backend, and packages everything into a minimal JRE runtime image.
+- `Makefile` targets (`docker-build`, `docker-run`, `docker-push`) to build, run, and publish that image.
+
+**Expected artifact:** a single self-contained Docker image containing the Spring Boot backend (with the React Admin frontend served from `/`) and using the `dev` profile (in-memory H2, seeded sample data) by default.
+
+Published image on Docker Hub: **[`nxdeep/project-devops-deploy`](https://hub.docker.com/r/nxdeep/project-devops-deploy)**
+
+### Build and run
+
+```bash
+# build the image locally
+make docker-build
+
+# or plain docker
+docker build -t nxdeep/project-devops-deploy:latest .
+```
+
+```bash
+# run the container
+make docker-run
+
+# or plain docker
+docker run --rm -p 8080:8080 -p 9090:9090 nxdeep/project-devops-deploy:latest
+```
+
+Once running, open:
+- App / API: `http://localhost:8080/#/bulletins`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- Actuator health: `http://localhost:9090/actuator/health`
+
+### Pull the published image
+
+```bash
+docker pull nxdeep/project-devops-deploy:latest
+docker run --rm -p 8080:8080 -p 9090:9090 nxdeep/project-devops-deploy:latest
+```
+
+---
+
 > **Fork policy**: this upstream repository is read-only. We do not review or merge pull requests and we do not accept infrastructure changes (Dockerfiles, Ansible roles, CI/CD workflows, etc.). To experiment or extend the project, fork it and work inside your own repository.
 
 The default `dev` profile uses an in-memory H2 database and seeds 10 sample bulletins through `DataInitializer`, so the API works immediately after startup.
