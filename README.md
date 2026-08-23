@@ -1,5 +1,7 @@
 # Project DevOps Deploy
 
+![CI](https://github.com/n0d33p/project-devops-deploy/actions/workflows/ci.yml/badge.svg)
+
 Bulletin board service.
 
 ## About this fork
