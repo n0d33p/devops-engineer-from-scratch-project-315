@@ -54,6 +54,10 @@ The default `dev` profile uses an in-memory H2 database and seeds 10 sample bull
 
 API documentation is available via Swagger UI at `http://localhost:8080/swagger-ui/index.html`.
 
+### Domain
+
+The application will be reachable at **http://bulletinsproject.ru** once deployed to the production server. DNS is already configured (A record → server's public IP); the deployment step will make the app respond on this domain.
+
 ## Project layout
 
 - Backend (Spring Boot) lives in the repository root.

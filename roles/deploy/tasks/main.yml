@@ -55,7 +55,7 @@
   ansible.builtin.meta: flush_handlers
 
 - name: wait for the app to report healthy
-  ansible.builin.uri:
+  ansible.builtin.uri:
     url: "http://localhost:{{ app_management_port }}/actuator/health"
     status_code: 200
   register: health
