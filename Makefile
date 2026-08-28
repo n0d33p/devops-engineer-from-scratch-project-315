@@ -1,5 +1,7 @@
 DOCKER_IMAGE = nxdeep/project-devops-deploy
 DOCKER_TAG = latest
+INVENTORY ?= inventory.ini
+IMAGE_TAG ?= latest
 
 test:
 	./gradlew test
@@ -37,4 +39,17 @@ docker-push:
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 	docker push $(DOCKER_IMAGE):v1
 
-.PHONY: test start run update-gradle update-deps install build lint lint-fix docker-build docker-run docker-push
+bootstrap:
+	ansible-galaxy collection install -r requirements.yml
+
+deploy:
+	ansible-playbook -i $(INVENTORY) playbook.yml --ask-vault-pass -e image_tag=$(IMAGE_TAG)
+
+update:
+	ansible-playbook -i $(INVENTORY) update.yml --ask-vault-pass -e image_tag=$(IMAGE_TAG)
+
+rollback:
+	@test "$(IMAGE_TAG)" != "latest" || (echo "Usage: make rollback IMAGE_TAG=<previous-stable-tag>"; exit 1)
+	ansible-playbook -i $(INVENTORY) update.yml --ask-vault-pass -e image_tag=$(IMAGE_TAG)
+
+.PHONY: test start run update-gradle update-deps install build lint lint-fix docker-build docker-run docker-push bootstrap deploy update rollback
