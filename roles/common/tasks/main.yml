@@ -3,13 +3,44 @@
     update_cache: yes
     cache_valid_time: 3600
 
-- name: install docker & docker compose
+- name: install prerequisites for adding Docker's apt repository
   ansible.builtin.apt:
     name:
-      - docker.io
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+
+- name: create keyring directory for apt signing keys
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: download Docker's official GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: add Docker's official apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+    filename: docker
+
+- name: install docker & docker compose (from Docker's official repo)
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
       - docker-compose-plugin
       - python3-docker
     state: present
+    update_cache: yes
 
 - name: ensure docker is running and enabled
   ansible.builtin.service:

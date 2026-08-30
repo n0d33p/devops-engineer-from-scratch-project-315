@@ -1,0 +1,44 @@
+- name: create caddy deploy directory
+  ansible.builtin.file:
+    path: "{{ proxy_deploy_dir }}"
+    state: directory
+    owner: "{{ username }}"
+    group: docker
+    mode: "0750"
+
+- name: create caddy persistent data/config directories
+  ansible.builtin.file:
+    path: "{{ proxy_deploy_dir }}/{{ item }}"
+    state: directory
+    owner: "{{ username }}"
+    group: docker
+    mode: "0750"
+  loop:
+    - data
+    - config
+
+- name: write Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ proxy_deploy_dir }}/Caddyfile"
+    owner: "{{ username }}"
+    group: docker
+    mode: "0640"
+  notify: reload caddy
+
+- name: write docker-compose.yml for caddy
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ proxy_deploy_dir }}/docker-compose.yml"
+    owner: "{{ username }}"
+    group: docker
+    mode: "0640"
+  notify: recreate caddy container
+
+- name: make sure caddy is up
+  community.docker.docker_compose_v2:
+    project_src: "{{ proxy_deploy_dir }}"
+    state: present
+
+- name: apply pending caddy changes now
+  ansible.builtin.meta: flush_handlers
