@@ -16,4 +16,4 @@
   roles:
     - common
     - deploy
-    - proxy
+    - nginx
