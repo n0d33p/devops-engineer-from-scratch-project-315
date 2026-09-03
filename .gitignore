@@ -44,7 +44,6 @@ vault_password
 *.pem
 *.key
 *.retry
-.vault_password
 
 ### Node / Frontend ###
 frontend/node_modules/
