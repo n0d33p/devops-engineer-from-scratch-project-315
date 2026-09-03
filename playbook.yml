@@ -1,18 +1,11 @@
 - hosts: localhost
   connection: local
   gather_facts: false
-  vars_files:
-    - vars/main.yml
-    - vars/vault.yml
   roles:
     - storage
 
 - hosts: webservers
   become: yes
-  vars_files:
-    - vars/main.yml
-    - vars/vault.yml
-
   roles:
     - common
     - deploy

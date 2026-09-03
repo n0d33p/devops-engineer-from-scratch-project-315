@@ -36,3 +36,24 @@ out/
 ### VS Code ###
 .vscode/
 *.db
+
+### Ansible & Security ###
+*.vault_pass
+.vault_pass
+vault_password
+*.pem
+*.key
+*.retry
+
+### Node / Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/.nx/
+.npm/
+npm-debug.log*
+
+### OS / Environment ###
+.DS_Store
+Thumbs.db
+*.env
+*.env.local
