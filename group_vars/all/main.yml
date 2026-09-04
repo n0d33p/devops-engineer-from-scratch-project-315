@@ -1,0 +1,21 @@
+username: 'wh0am1'
+
+app_name: bulletin-board
+docker_image: nxdeep/project-devops-deploy
+app_image_tag: "{{ image_tag | default('latest') }}"
+
+app_deploy_dir: /opt/bulletin-board
+app_data_dir: "{{ app_deploy_dir }}/data"
+app_logs_dir: "{{ app_deploy_dir }}/logs"
+
+app_http_port: 8080
+app_management_port: 9090
+
+app_domain: bulletinsproject.ru
+proxy_deploy_dir: /opt/caddy
+
+acme_email: "admin@{{ app_domain }}"
+
+s3_bucket_name: bulletinsproject-images
+s3_region: ru-central1
+s3_endpoint: https://storage.yandexcloud.net

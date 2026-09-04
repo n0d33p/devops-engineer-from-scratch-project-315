@@ -1,0 +1,104 @@
+- name: stop and remove the old Caddy container, if present
+  community.docker.docker_compose_v2:
+    project_src: "{{ proxy_deploy_dir }}"
+    state: absent
+  ignore_errors: true
+
+- name: remove old Caddy deploy directory
+  ansible.builtin.file:
+    path: "{{ proxy_deploy_dir }}"
+    state: absent
+
+- name: install nginx and certbot
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+
+- name: remove default nginx site
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+
+- name: create webroot directory for ACME HTTP-01 challenges
+  ansible.builtin.file:
+    path: /var/www/certbot
+    state: directory
+    mode: "0755"
+
+- name: check whether a certificate already exists
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ app_domain }}/fullchain.pem"
+  register: cert_file
+
+- name: write nginx site config (http-only until a certificate exists)
+  ansible.builtin.template:
+    src: app.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_domain }}.conf"
+    mode: "0644"
+  vars:
+    cert_exists: "{{ cert_file.stat.exists }}"
+  notify: reload nginx
+
+- name: enable the app site
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ app_domain }}.conf"
+    dest: "/etc/nginx/sites-enabled/{{ app_domain }}.conf"
+    state: link
+  notify: reload nginx
+
+- name: ensure nginx is running and enabled
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: apply pending nginx config changes now
+  ansible.builtin.meta: flush_handlers
+
+- name: obtain TLS certificate via certbot (webroot - doesn't touch nginx config itself)
+  ansible.builtin.command: >
+    certbot certonly --webroot -w /var/www/certbot -d {{ app_domain }}
+    --non-interactive --agree-tos -m {{ acme_email }}
+  when: not cert_file.stat.exists
+
+- name: re-check certificate presence after issuance
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ app_domain }}/fullchain.pem"
+  register: cert_file_after
+
+- name: re-render nginx config now that the certificate exists (adds HTTPS block)
+  ansible.builtin.template:
+    src: app.conf.j2
+    dest: "/etc/nginx/sites-available/{{ app_domain }}.conf"
+    mode: "0644"
+  vars:
+    cert_exists: "{{ cert_file_after.stat.exists }}"
+  when: cert_file_after.stat.exists
+  notify: reload nginx
+
+- name: make sure the HTTPS block is live before finishing
+  ansible.builtin.meta: flush_handlers
+
+- name: reload nginx after certbot renews the certificate automatically
+  ansible.builtin.copy:
+    dest: /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+    mode: "0755"
+    content: |
+      #!/bin/sh
+      systemctl reload nginx
+
+- name: ensure the certbot renewal timer is enabled and running
+  ansible.builtin.service:
+    name: certbot.timer
+    state: started
+    enabled: yes
+
+- name: verify automated renewal works (dry run, doesn't touch the real cert)
+  ansible.builtin.command: certbot renew --dry-run
+  when: cert_file_after.stat.exists
+  changed_when: false
