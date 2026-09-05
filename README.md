@@ -4,6 +4,15 @@
 
 Bulletin board service.
 
+## About this repository
+
+This repository contains the Ansible-based infrastructure-as-code setup used to
+deploy the application from [n0d33p/project-devops-deploy](https://github.com/n0d33p/project-devops-deploy)
+to a Yandex Cloud VM: server provisioning, Docker, Nginx + Let's Encrypt (HTTPS),
+S3-compatible object storage, and automated deploy/update/rollback via `Makefile`.
+
+Created as part of Hexlet's "Bulletin board (IaC)" assignment.
+
 ## Application Link
 
 - **Production URL:** [https://bulletinsproject.ru/#/bulletins](https://bulletinsproject.ru/#/bulletins)
@@ -45,66 +54,35 @@ make update IMAGE_TAG=v1.0.1
 
 # 4. Rollback application to a previous stable tag
 make rollback IMAGE_TAG=v1.0.0
-
 ```
 
 ---
 
-## About this fork
+## Application Source Code
 
-This is a fork of the [Hexlet `project-devops-deploy` template](https://github.com/Hexlet-components/project-devops-deploy), created as part of the "Bulletin board (IaC)" assignment.
-
-**What was added in this fork:**
-
-* Multi-stage `Dockerfile` assembling React Admin frontend and Spring Boot backend.
-* Ansible roles (`common`, `deploy`, `nginx`, `storage`) for fully automated infrastructure provisioning and application deployment.
-* CI workflow via GitHub Actions checking code formatting and tests.
+The application itself (Java/Spring Boot backend + React Admin frontend, local
+run/build/test commands, Dockerfile) lives in a separate repository:
+[n0d33p/project-devops-deploy](https://github.com/n0d33p/project-devops-deploy)
 
 Published Docker Image: **[`nxdeep/project-devops-deploy`](https://hub.docker.com/r/nxdeep/project-devops-deploy)**
 
 ---
 
-## Local Development & Build
-
-### Local Launch
-
-```bash
-# Run backend locally
-make run
-
-# Run tests & linting
-make test
-make lint
-
-```
-
-### Docker Commands
-
-```bash
-# Build Docker image
-make docker-build
-
-# Run Docker container locally
-make docker-run
-
-# Push image to registry
-make docker-push
-
-```
-
----
-
 ## Environment Variables Configuration
 
-Non-secret configuration lives in `group_vars/main.yml` (applies to every host). Secrets are split per-group and managed via Ansible Vault: `group_vars/webservers/vault.yml` (OS user password, S3 keys) and `group_vars/localnode/vault.yml` (S3 keys, used when provisioning the bucket from the control machine).
+Non-secret configuration lives in `group_vars/main.yml` (applies to every host).
+Secrets are split per-group and managed via Ansible Vault:
+- `group_vars/webservers/vault.yml` — OS user password, S3 keys (used by the
+  deployed application on the target server)
+- `group_vars/localnode/vault.yml` — S3 keys (used locally when provisioning
+  the bucket via `roles/storage`)
 
-Key variables configured:
+The application runs on its default `dev` profile (in-memory H2 database) —
+no external database is configured. Key environment variables passed to the
+container:
 
-* `SPRING_PROFILES_ACTIVE`: `prod`
-* `SPRING_DATASOURCE_URL`: PostgreSQL JDBC connection string
-* `STORAGE_S3_*`: Object Storage S3 parameters
-* `MANAGEMENT_SERVER_PORT`: `9090` (Actuator monitoring)
-
-```
-
-```
+* `STORAGE_S3_BUCKET` / `STORAGE_S3_REGION` / `STORAGE_S3_ENDPOINT` /
+  `STORAGE_S3_ACCESSKEY` / `STORAGE_S3_SECRETKEY` — Yandex Object Storage
+  (S3-compatible) configuration for uploaded images
+* `MANAGEMENT_SERVER_PORT` — `9090` (Actuator monitoring)
+* `JAVA_OPTS` — JVM heap limits and logging configuration
