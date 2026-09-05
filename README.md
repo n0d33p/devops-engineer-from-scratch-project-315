@@ -17,13 +17,15 @@ Bulletin board service.
 - **OS:** Linux / macOS
 - **Python:** 3.10+
 - **Ansible:** 2.15+
-- **Ansible Collections:** `community.docker`, `community.general`, `amazon.aws` (install via `make setup` or `make bootstrap`)
+- **Ansible Collections:** `community.docker`, `community.general`, `amazon.aws`
+- **Ansible Galaxy Roles:** `geerlingguy.docker`, `geerlingguy.nginx`, `geerlingguy.certbot`
+- Install both via `make bootstrap`
 
 ### Target Server (Managed Node)
 - **OS:** Ubuntu 22.04 / 24.04 LTS
 - **Ports Open:** 80 (HTTP), 443 (HTTPS), 22 (SSH)
 - **Access:** User with `sudo` privileges and SSH key authorization
-- **Pre-installed software:** Python 3 (Docker and Nginx/Caddy are provisioned automatically via Ansible roles)
+- **Pre-installed software:** Python 3 (Docker and Nginx are provisioned automatically via Ansible roles)
 
 ---
 
@@ -32,8 +34,8 @@ Bulletin board service.
 All deployment workflows are automated via `Makefile`:
 
 ```bash
-# 1. Install required Ansible collections
-make setup
+# 1. Install required Ansible collections and roles
+make bootstrap
 
 # 2. Deploy infrastructure and application to production
 make deploy
@@ -94,7 +96,7 @@ make docker-push
 
 ## Environment Variables Configuration
 
-Sensitive data and environment configuration are managed via Ansible Vault in `group_vars/all/vault.yml` and `group_vars/all/main.yml`.
+Non-secret configuration lives in `group_vars/main.yml` (applies to every host). Secrets are split per-group and managed via Ansible Vault: `group_vars/webservers/vault.yml` (OS user password, S3 keys) and `group_vars/localnode/vault.yml` (S3 keys, used when provisioning the bucket from the control machine).
 
 Key variables configured:
 
